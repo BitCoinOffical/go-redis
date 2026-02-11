@@ -1,11 +1,11 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"log"
 	"net"
 	"os"
+
+	"github.com/codecrafters-io/redis-starter-go/internal/api/handlers"
 )
 
 // Ensures gofmt doesn't remove the "net" and "os" imports in stage 1 (feel free to remove this!)
@@ -23,21 +23,14 @@ func main() {
 		fmt.Println("Failed to bind to port 6379")
 		os.Exit(1)
 	}
+
 	for {
 		conn, err := l.Accept()
 		if err != nil {
 			fmt.Println("Error accepting connection: ", err.Error())
 			os.Exit(1)
 		}
-		scanner := bufio.NewScanner(conn)
-
-		for scanner.Scan() {
-			text := scanner.Text()
-			log.Println(text)
-			if text == "PING" {
-				conn.Write([]byte("+PONG\r\n"))
-			}
-		}
-
+		h := handlers.NewHandlers(conn)
+		h.Ping.PingHandler()
 	}
 }
