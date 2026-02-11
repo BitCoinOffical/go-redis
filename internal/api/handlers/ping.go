@@ -18,14 +18,19 @@ func NewPingHandler(Conn net.Conn) *PingHandler {
 func (h *PingHandler) PingHandler() {
 	defer h.Conn.Close()
 	for {
-		scanner := bufio.NewScanner(h.Conn)
+		go func() {
 
-		for scanner.Scan() {
-			text := scanner.Text()
-			log.Println(text)
-			if text == "PING" {
-				h.Conn.Write([]byte("+PONG\r\n"))
+			scanner := bufio.NewScanner(h.Conn)
+
+			for scanner.Scan() {
+				text := scanner.Text()
+				log.Println(text)
+				if text == "PING" {
+					h.Conn.Write([]byte("+PONG\r\n"))
+				}
 			}
-		}
+
+		}()
 	}
+
 }
