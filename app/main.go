@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"net"
 	"os"
 )
@@ -29,13 +30,14 @@ func main() {
 			os.Exit(1)
 		}
 		scanner := bufio.NewScanner(conn)
-		go func() {
-			for scanner.Scan() {
-				text := scanner.Text()
-				if text == "PING" {
-					conn.Write([]byte("PONG"))
-				}
+
+		for scanner.Scan() {
+			text := scanner.Text()
+			log.Println(text)
+			if text == "PING" {
+				conn.Write([]byte("PONG"))
 			}
-		}()
+		}
+
 	}
 }
