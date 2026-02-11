@@ -31,6 +31,6 @@ func main() {
 			os.Exit(1)
 		}
 		h := handlers.NewHandlers(conn)
-		h.Ping.PingHandler()
+		go h.Ping.PingHandler()
 	}
 }
