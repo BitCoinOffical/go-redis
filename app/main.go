@@ -35,7 +35,7 @@ func main() {
 			text := scanner.Text()
 			log.Println(text)
 			if text == "PING" {
-				conn.Write([]byte("PONG"))
+				conn.Write([]byte("+PONG\r\n"))
 			}
 		}
 
