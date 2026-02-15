@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/codecrafters-io/redis-starter-go/internal/api/handlers"
+	"github.com/codecrafters-io/redis-starter-go/internal/router"
 )
 
 // Ensures gofmt doesn't remove the "net" and "os" imports in stage 1 (feel free to remove this!)
@@ -18,19 +19,18 @@ func main() {
 
 	// Uncomment the code below to pass the first stage
 
-	l, err := net.Listen("tcp", "0.0.0.0:6379")
+	l, err := net.Listen("tcp", ":6379")
 	if err != nil {
 		fmt.Println("Failed to bind to port 6379")
 		os.Exit(1)
 	}
-
 	for {
 		conn, err := l.Accept()
 		if err != nil {
 			fmt.Println("Error accepting connection: ", err.Error())
 			os.Exit(1)
 		}
-		h := handlers.NewHandlers(conn)
-		go h.Ping.PingHandler()
+
+		router.Command(conn, handlers.NewHandlers(conn))
 	}
 }
