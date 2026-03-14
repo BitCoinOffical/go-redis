@@ -1,3 +1,4 @@
+# go-redis
 [![progress-banner](https://backend.codecrafters.io/progress/redis/9e362cbf-b3ba-4428-ba25-a9082100143b)](https://app.codecrafters.io/users/codecrafters-bot?r=2qF)
 
 This is a starting point for Go solutions to the
@@ -31,3 +32,4 @@ Note: This section is for stages 2 and beyond.
    `app/main.go`.
 1. Commit your changes and run `git push origin master` to submit your solution
    to CodeCrafters. Test output will be streamed to your terminal.
+
