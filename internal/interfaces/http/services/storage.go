@@ -2,6 +2,7 @@ package services
 
 import (
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/internal/adapters/secondary/storage"
@@ -19,7 +20,7 @@ func NewService(repo *repository.Repo) *Service {
 func (s *Service) SetService(key, value string, options ...string) (string, error) {
 	var term time.Time
 	if len(options) > 0 {
-		switch options[0] {
+		switch strings.ToUpper(options[0]) {
 		case "PX":
 			millisecond, err := strconv.Atoi(options[1])
 			if err != nil {

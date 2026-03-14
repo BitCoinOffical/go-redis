@@ -22,7 +22,7 @@ func main() {
 			}
 			defer conn.Close()
 
-			ping := "set we we PX 100"
+			ping := "RpuSh key v1"
 			_, err = conn.Write([]byte(parser.Array(ping)))
 			if err != nil {
 				log.Printf("Client %d: write error: %v\n", id, err)
@@ -40,7 +40,7 @@ func main() {
 
 			time.Sleep(time.Second)
 
-			ping = "get we"
+			ping = "get key"
 			_, err = conn.Write([]byte(parser.Array(ping)))
 			if err != nil {
 				log.Printf("Client %d: write error: %v\n", id, err)

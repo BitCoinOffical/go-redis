@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"log"
 	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/internal/adapters/secondary/storage"
@@ -25,6 +26,7 @@ func (m *Repo) SetRepo(key, value string, TTL *time.Time) string {
 	}
 	m.m[key] = storage.Item{
 		Data: value,
+		TTL:  nil,
 	}
 	return parser.SimpleString("OK")
 }
@@ -36,13 +38,16 @@ func (m *Repo) GetRepo(key string) *storage.Item {
 			Data: "$-1\r\n",
 		}
 	}
+	log.Println("нашли", v)
 
 	ok = time.Now().Before(*v.TTL)
-	if !ok {
+	if !ok && v.TTL != nil {
+		log.Println("нашли но время истекло", v, v.TTL)
 		delete(m.m, key)
 		return &storage.Item{
 			Data: "$-1\r\n",
 		}
 	}
+	log.Println("возврощаем", v)
 	return &v
 }

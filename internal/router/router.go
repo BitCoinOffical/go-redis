@@ -47,12 +47,7 @@ func Command(Conn net.Conn, h *handlers.Handlers) {
 				Conn.Write([]byte(ErrorBadAgument.Error()))
 				continue
 			}
-			//set key v px 100 | len = 5
-			//set s s | len = 3/ idx = 2
 			if len(cmd) > 3 {
-				//set we we we | fail!
-				//set we we we we| fail!
-				//set we we PX 10000 | ok! len = 5 / idx = 4
 				if len(cmd) < 5 {
 					Conn.Write([]byte(ErrorBadAgument.Error()))
 					continue
@@ -73,5 +68,26 @@ func Command(Conn net.Conn, h *handlers.Handlers) {
 			go h.Handler.Get(cmd[1])
 			continue
 		}
+
+		if strings.Contains(strings.ToUpper(cmd[0]), "RPUSH") {
+			//rpush key v 
+			//rpush key v px 20
+			if len(cmd) < 3 {
+				Conn.Write([]byte(ErrorBadAgument.Error()))
+				continue
+			}
+			if len(cmd) > 3 {
+				if len(cmd) < 5 {
+					Conn.Write([]byte(ErrorBadAgument.Error()))
+					continue
+				}
+				go h.Handler.Set(cmd[1], cmd[2], cmd[3], cmd[4])
+				continue
+			}
+
+			go h.Handler.Set(cmd[1], cmd[2])
+			continue
+		}
+
 	}
 }
