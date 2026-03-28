@@ -9,7 +9,7 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/internal/router"
 )
 
-// Ensures gofmt doesn't remove the "net" and "os" imports in stage 1 (feel free to remove this!)
+// Ensure gofmt doesn't remove the "net" and "os" imports in stage 1 (feel free to remove this!)
 var _ = net.Listen
 var _ = os.Exit
 

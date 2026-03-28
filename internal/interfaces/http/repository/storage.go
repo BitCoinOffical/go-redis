@@ -1,10 +1,17 @@
 package repository
 
 import (
+	"errors"
+	"log"
 	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/internal/adapters/secondary/storage"
+	"github.com/codecrafters-io/redis-starter-go/internal/dto"
 	"github.com/codecrafters-io/redis-starter-go/internal/parser"
+)
+
+const (
+	NotFound = "$-1\r\n"
 )
 
 type Repo struct {
@@ -15,34 +22,44 @@ func NewRepository(m storage.Storage) *Repo {
 	return &Repo{m: m}
 }
 
-func (m *Repo) SetRepo(key, value string, TTL *time.Time) string {
-	if TTL != nil {
-		m.m[key] = storage.Item{
-			Data: value,
+func (m *Repo) SetRepo(setDTO *dto.SetDTO, items []storage.Item, TTL *time.Time) string {
+	data := []storage.Item{}
+
+	for _, item := range items {
+		data = append(data, item)
+	}
+
+	for _, v := range setDTO.Values {
+		data = append(data, storage.Item{
+			Data: v,
 			TTL:  TTL,
-		}
-		return parser.SimpleString("OK")
+		})
 	}
-	m.m[key] = storage.Item{
-		Data: value,
-	}
+
+	log.Println("Incoming DATA: ", data)
+	m.m[setDTO.Key] = data
 	return parser.SimpleString("OK")
 }
 
-func (m *Repo) GetRepo(key string) *storage.Item {
+func (m *Repo) GetRepo(key string) ([]storage.Item, error) {
 	v, ok := m.m[key]
 	if !ok {
-		return &storage.Item{
-			Data: "$-1\r\n",
+		return nil, errors.New(NotFound)
+	}
+
+	for idx, val := range v {
+		if val.TTL != nil {
+			ok = time.Now().Before(*val.TTL)
+			if !ok {
+				slice := v
+				v = append(slice[:idx], slice[idx+1:]...)
+			}
 		}
 	}
 
-	ok = time.Now().Before(*v.TTL)
-	if !ok {
-		delete(m.m, key)
-		return &storage.Item{
-			Data: "$-1\r\n",
-		}
+	if len(v) == 0 {
+		return nil, errors.New(NotFound)
 	}
-	return &v
+
+	return v, nil
 }

@@ -5,9 +5,11 @@ import (
 	"io"
 	"log"
 	"net"
+	"strconv"
 	"strings"
 
 	"github.com/codecrafters-io/redis-starter-go/internal/api/handlers"
+	"github.com/codecrafters-io/redis-starter-go/internal/dto"
 	"github.com/codecrafters-io/redis-starter-go/internal/parser"
 )
 
@@ -16,9 +18,13 @@ func Command(Conn net.Conn, h *handlers.Handlers) {
 	defer Conn.Close()
 	for {
 		n, err := Conn.Read(buffer)
-		if err != nil && !errors.Is(err, io.EOF) {
-			log.Printf(">>> %w: %v\n", ErrorRead, err)
-			continue
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				log.Printf("client disconnect")
+			} else {
+				log.Printf("%s: %s\n", ErrorRead.Error(), err.Error())
+			}
+			break
 		}
 		text := string(buffer[:n])
 		cmd := parser.Decode(text)
@@ -47,21 +53,31 @@ func Command(Conn net.Conn, h *handlers.Handlers) {
 				Conn.Write([]byte(ErrorBadAgument.Error()))
 				continue
 			}
-			//set key v px 100 | len = 5
-			//set s s | len = 3/ idx = 2
-			if len(cmd) > 3 {
-				//set we we we | fail!
-				//set we we we we| fail!
-				//set we we PX 10000 | ok! len = 5 / idx = 4
-				if len(cmd) < 5 {
+
+			typettl := cmd[len(cmd)-2]
+			if strings.ToUpper(typettl) == "PX" || strings.ToUpper(typettl) == "EX" {
+				valuettl, err := strconv.Atoi(cmd[len(cmd)-1])
+				if err != nil {
 					Conn.Write([]byte(ErrorBadAgument.Error()))
 					continue
 				}
-				go h.Handler.Set(cmd[1], cmd[2], cmd[3], cmd[4])
+				dto := dto.SetDTO{
+					Key:      cmd[1],
+					Typettl:  typettl,
+					Valuettl: valuettl,
+					Values:   cmd[2:(len(cmd) - 2)],
+				}
+
+				go h.Handler.Set(&dto)
 				continue
 			}
 
-			go h.Handler.Set(cmd[1], cmd[2])
+			dto := dto.SetDTO{
+				Key:    cmd[1],
+				Values: cmd[2:],
+			}
+
+			go h.Handler.Set(&dto)
 			continue
 		}
 
@@ -71,6 +87,40 @@ func Command(Conn net.Conn, h *handlers.Handlers) {
 				continue
 			}
 			go h.Handler.Get(cmd[1])
+			continue
+		}
+
+		if strings.Contains(strings.ToUpper(cmd[0]), "RPUSH") {
+			//rpush key v
+			//rpush key v px 20
+			////rpush key value1 value2 value3 px 20
+			if len(cmd) < 3 {
+				Conn.Write([]byte(ErrorBadAgument.Error()))
+				continue
+			}
+			typettl := cmd[len(cmd)-2]
+			if strings.ToUpper(typettl) == "PX" || strings.ToUpper(typettl) == "EX" {
+				valuettl, err := strconv.Atoi(cmd[len(cmd)-1])
+				if err != nil {
+					Conn.Write([]byte(ErrorBadAgument.Error()))
+					continue
+				}
+				dto := dto.SetDTO{
+					Key:      cmd[1],
+					Typettl:  typettl,
+					Valuettl: valuettl,
+					Values:   cmd[2:(len(cmd) - 2)],
+				}
+
+				go h.Handler.Set(&dto)
+				continue
+			}
+			dto := dto.SetDTO{
+				Key:    cmd[1],
+				Values: cmd[2:],
+			}
+
+			go h.Handler.Set(&dto)
 			continue
 		}
 	}
