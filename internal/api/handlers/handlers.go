@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/codecrafters-io/redis-starter-go/internal/dto"
 	"github.com/codecrafters-io/redis-starter-go/internal/interfaces/http/services"
 	"github.com/codecrafters-io/redis-starter-go/internal/parser"
 )
@@ -26,8 +27,8 @@ func (h *Handler) EchoHandler(responce string) {
 	h.Conn.Write([]byte(responce))
 }
 
-func (h *Handler) Set(key, value string, options ...string) {
-	status, err := h.service.SetService(key, value, options...)
+func (h *Handler) Set(setDTO *dto.SetDTO) {
+	status, err := h.service.SetService(setDTO)
 	if err != nil {
 		h.Conn.Write([]byte(err.Error()))
 		return
@@ -36,8 +37,11 @@ func (h *Handler) Set(key, value string, options ...string) {
 }
 
 func (h *Handler) Get(key string) {
-	res := h.service.GetService(key)
-	vallue := fmt.Sprintf("%s %s", res.Data, res.TTL)
-	h.Conn.Write([]byte(vallue))
-
+	res, err := h.service.GetService(key)
+	if err != nil {
+		h.Conn.Write([]byte(err.Error()))
+		return
+	}
+	value := fmt.Sprintf("%s", res)
+	h.Conn.Write([]byte(value))
 }

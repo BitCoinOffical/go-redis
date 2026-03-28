@@ -1,12 +1,16 @@
 package services
 
 import (
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/internal/adapters/secondary/storage"
+	"github.com/codecrafters-io/redis-starter-go/internal/dto"
 	"github.com/codecrafters-io/redis-starter-go/internal/interfaces/http/repository"
+)
+
+const (
+	NotFound = "$-1\r\n"
 )
 
 type Service struct {
@@ -17,29 +21,41 @@ func NewService(repo *repository.Repo) *Service {
 	return &Service{repo: repo}
 }
 
-func (s *Service) SetService(key, value string, options ...string) (string, error) {
-	var term time.Time
-	if len(options) > 0 {
-		switch strings.ToUpper(options[0]) {
+func (s *Service) SetService(setDTO *dto.SetDTO) (string, error) {
+	if setDTO.Typettl != "" && setDTO.Valuettl != 0 {
+		switch strings.ToUpper(setDTO.Typettl) {
 		case "PX":
-			millisecond, err := strconv.Atoi(options[1])
-			if err != nil {
-				return "", ErrorConversion
+			term := time.Now().Add(time.Duration(setDTO.Valuettl) * time.Millisecond)
+
+			items, err := s.GetService(setDTO.Key)
+			if err == nil {
+				return s.repo.SetRepo(setDTO, items, &term), nil
 			}
-			term = time.Now().Add(time.Duration(millisecond) * time.Millisecond)
+
+			return s.repo.SetRepo(setDTO, nil, &term), nil
+
 		case "EX":
-			second, err := strconv.Atoi(options[1])
+
+			term := time.Now().Add(time.Duration(setDTO.Valuettl) * time.Second)
+
+			items, err := s.GetService(setDTO.Key)
 			if err != nil {
-				return "", ErrorConversion
+				return s.repo.SetRepo(setDTO, items, &term), nil
 			}
-			term = time.Now().Add(time.Duration(second) * time.Second)
+
+			return s.repo.SetRepo(setDTO, nil, &term), nil
 		default:
 			return "", ErrorInvalidOptions
 		}
 	}
-	return s.repo.SetRepo(key, value, &term), nil
+
+	items, err := s.GetService(setDTO.Key)
+	if err == nil {
+		return s.repo.SetRepo(setDTO, items, nil), nil
+	}
+	return s.repo.SetRepo(setDTO, nil, nil), nil
 }
 
-func (s *Service) GetService(key string) *storage.Item {
+func (s *Service) GetService(key string) ([]storage.Item, error) {
 	return s.repo.GetRepo(key)
 }
