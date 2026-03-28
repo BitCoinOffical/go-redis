@@ -3,6 +3,7 @@
 
 APP = .bin/app.exe 
 CLI = .bin/cli.exe
+
 GOOS ?= windows
 
 
@@ -23,5 +24,11 @@ ifeq ($(GOOS), windows)
 else
 	rm -rf .bin
 endif
+
+run-cli:
+	go run cli/main.go
+
+run-app:
+	go run app/main.go
 
 all: $(APP) $(CLI)
